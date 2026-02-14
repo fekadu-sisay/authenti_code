@@ -32,7 +32,9 @@ async function getRepoInfo(url: string) {
       repo,  // Repository name
     });
 
+    const languages = await octokit.repos.listLanguages({ owner, repo });
     console.log("Repository Info:");
+    console.log(languages.data)
     console.log({
       full_name: response.data.full_name,
       description: response.data.description,
