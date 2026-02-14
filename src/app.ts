@@ -3,7 +3,6 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import userRoutes from "./modules/user/user.route";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
 const ROUTE_PREFIX = "/api/v1";
@@ -22,7 +21,6 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Routes
-app.use(`${ROUTE_PREFIX}`, userRoutes);
 
 // Custom middlewares
 
