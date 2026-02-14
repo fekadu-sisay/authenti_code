@@ -1,5 +1,4 @@
 import Job, { IJob } from "./job.model";
-import Criteria from "../criteria/criteria.model";
 import mongoose, { Types } from "mongoose";
 
 export class JobService {
@@ -38,7 +37,6 @@ export class JobService {
 
   async deleteJob(jobId: string): Promise<IJob | null> {
     const objectId = new Types.ObjectId(jobId);
-    await Criteria.deleteMany({ jobId: objectId });
-    return Job.findByIdAndDelete(jobId).exec();
+    return Job.findByIdAndDelete(objectId).exec();
   }
 }

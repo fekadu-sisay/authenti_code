@@ -29,7 +29,6 @@ export class ReviewService {
 
   async createReview(data: {
     jobId: string;
-    criteriaId: string;
     candidateId: string;
     repoUrl: string;
     trustScore: number;
@@ -40,13 +39,10 @@ export class ReviewService {
       styleConsistency: number;
       aiPattern: number;
     };
-    warnings?: string[];
   }): Promise<IReview> {
     const review = new Review({
       ...data,
       jobId: new Types.ObjectId(data.jobId),
-      criteriaId: new Types.ObjectId(data.criteriaId),
-      warnings: data.warnings || [],
       createdAt: new Date(),
     });
     return review.save();

@@ -3,7 +3,11 @@ import { ReviewService } from "./review.service";
 
 const reviewService = ReviewService.getInstance();
 
-export const getReviewsByJobId = async (req: Request, res: Response, next: NextFunction) => {
+export const getReviewsByJobId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { jobId } = req.params;
     const resolvedJobId = Array.isArray(jobId) ? jobId[0] : jobId;
@@ -14,14 +18,20 @@ export const getReviewsByJobId = async (req: Request, res: Response, next: NextF
   }
 };
 
-export const getReviewById = async (req: Request, res: Response, next: NextFunction) => {
+export const getReviewById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { id } = req.params;
     const reviewId = Array.isArray(id) ? id[0] : id;
     const review = await reviewService.getReviewById(reviewId);
 
     if (!review) {
-      return res.status(404).json({ success: false, message: "Review not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Review not found" });
     }
 
     return res.status(200).json({ success: true, data: review });
@@ -30,30 +40,26 @@ export const getReviewById = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const createReview = async (req: Request, res: Response, next: NextFunction) => {
+export const createReview = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const {
-      jobId,
-      criteriaId,
-      candidateId,
-      repoUrl,
-      trustScore,
-      signals,
-      warnings = [],
-    } = req.body;
+    const { jobId, candidateId, repoUrl, trustScore, signals } = req.body;
 
-    if (!jobId || !criteriaId || !candidateId || !repoUrl || !trustScore || !signals) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
+    if (!jobId || !candidateId || !repoUrl || !trustScore || !signals) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
     }
 
     const review = await reviewService.createReview({
       jobId,
-      criteriaId,
       candidateId,
       repoUrl,
       trustScore,
       signals,
-      warnings,
     });
 
     return res.status(201).json({
@@ -61,7 +67,13 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
       message: "Review created successfully",
       data: review,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "This repo URL has already been submitted for this job",
+      });
+    }
     next(error);
   }
 };

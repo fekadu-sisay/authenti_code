@@ -12,6 +12,7 @@ const JobSchema = new Schema<IJob>({
   title: {
     type: String,
     required: true,
+    unique: true,
   },
 
   description: {
@@ -20,12 +21,6 @@ const JobSchema = new Schema<IJob>({
 
   stack: {
     type: [String],
-    required: true,
-  },
-
-  createdBy: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
     required: true,
   },
 
