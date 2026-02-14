@@ -1,14 +1,9 @@
 import { Router } from "express";
-import { Request, Response } from "express";
-import { StatusCodes } from "http-status-codes";
+import { getJobs, getJob } from "./job.controller";
 
 const router = Router();
 
-router.get("/users", (req: Request, res: Response) => {
-  res.status(StatusCodes.OK).json({
-    success: true,
-    message: "Users fetch successfully",
-  });
-});
+router.get("/jobs", getJobs);
+router.get("/jobs/:id", getJob);
 
 export default router;

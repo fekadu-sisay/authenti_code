@@ -1,7 +1,7 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 export interface ICriteria extends Document {
-  jobId: Schema.Types.ObjectId;
+  jobId: Types.ObjectId;
   commitConsistency: number;
   codeEvolution: number;
   documentation: number;
@@ -12,7 +12,7 @@ export interface ICriteria extends Document {
 
 const CriteriaSchema = new Schema<ICriteria>({
   jobId: {
-    type: Schema.Types.ObjectId,
+    type: Types.ObjectId,
     ref: "Job",
     required: true,
   },

@@ -1,10 +1,10 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
-export interface IJob extends Document {
+export interface IJob {
   title: string;
   description?: string;
   stack: string[];
-  createdBy: Schema.Types.ObjectId;
+  createdBy: Types.ObjectId;
   createdAt: Date;
 }
 

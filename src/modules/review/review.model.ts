@@ -1,8 +1,8 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 export interface IReview extends Document {
-  jobId: Schema.Types.ObjectId;
-  criteriaId: Schema.Types.ObjectId;
+  jobId: Types.ObjectId;
+  criteriaId: Types.ObjectId;
   candidateId: string;
   repoUrl: string;
   trustScore: number;
@@ -19,13 +19,14 @@ export interface IReview extends Document {
 
 const ReviewSchema = new Schema<IReview>({
   jobId: {
-    type: Schema.Types.ObjectId,
+    type: Types.ObjectId,
     ref: "Job",
     required: true,
   },
 
   criteriaId: {
-    type: String,
+    type: Types.ObjectId,
+    ref: "Criteria",
     required: true,
   },
 
@@ -66,3 +67,5 @@ const ReviewSchema = new Schema<IReview>({
 const Review = model<IReview>("Review", ReviewSchema);
 
 export default Review;
+
+
