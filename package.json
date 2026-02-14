@@ -9,7 +9,7 @@
     "start": "node dist/server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Fitsum wondessen, fekadu sisay, mikias alemayew",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
