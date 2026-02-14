@@ -38,6 +38,7 @@ export class ReviewService {
       documentation: number;
       styleConsistency: number;
       aiPattern: number;
+      report: string;
     };
   }): Promise<IReview> {
     const review = new Review({

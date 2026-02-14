@@ -1,12 +1,12 @@
 import { Octokit } from "@octokit/rest";
-import env from "../../config/env.ts"
+import env from "../../config/env";
 
 export async function GetTechstack(url: string) {
   const parsed = parseGitHubUrl(url);
   if (!parsed) return null;
   const { owner, repo } = parsed;
   const languages = await octokit.repos.listLanguages({ owner, repo });
-  return languages
+  return languages;
 }
 
 async function getAllCommits(owner: string, repo: string) {
@@ -38,8 +38,12 @@ export async function AvgLinesAddedPerCommit(url: string) {
 
   let totalAdded = 0;
   for (const commit of commits) {
-    const { data } = await octokit.repos.getCommit({ owner, repo, ref: commit.sha });
-    totalAdded += data.stats.additions;
+    const { data } = await octokit.repos.getCommit({
+      owner,
+      repo,
+      ref: commit.sha,
+    });
+    totalAdded += data.stats?.additions || 0;
   }
 
   return totalAdded / commits.length;
@@ -54,8 +58,12 @@ export async function AvgLinesDeletedPerCommit(url: string) {
 
   let totalDeleted = 0;
   for (const commit of commits) {
-    const { data } = await octokit.repos.getCommit({ owner, repo, ref: commit.sha });
-    totalDeleted += data.stats.deletions;
+    const { data } = await octokit.repos.getCommit({
+      owner,
+      repo,
+      ref: commit.sha,
+    });
+    totalDeleted += data?.stats?.deletions || 0;
   }
 
   return totalDeleted / commits.length;
@@ -77,7 +85,9 @@ export async function MedianTimeBetweenCommits(url: string) {
   const commits = await getAllCommits(owner, repo);
   if (commits.length < 2) return 0;
 
-  const times = commits.map(c => new Date(c.commit.author?.date || 0).getTime());
+  const times = commits.map((c) =>
+    new Date(c.commit.author?.date || 0).getTime(),
+  );
   const diffs = [];
   for (let i = 1; i < times.length; i++) {
     diffs.push(times[i] - times[i - 1]);
@@ -86,12 +96,17 @@ export async function MedianTimeBetweenCommits(url: string) {
   return median(diffs) / (1000 * 60 * 60); // in hours
 }
 
-export async function getAllFiles(owner: string, repo: string, path = ""): Promise<string[]> {
+export async function getAllFiles(
+  owner: string,
+  repo: string,
+  path = "",
+): Promise<string[]> {
   const { data } = await octokit.repos.getContent({ owner, repo, path });
   let files: string[] = [];
 
   for (const item of data as any) {
-    if (item.type === "file" && item.name.endsWith(".ts")) { // or .js/.py
+    if (item.type === "file" && item.name.endsWith(".ts")) {
+      // or .js/.py
       files.push(item.path);
     } else if (item.type === "dir") {
       const subFiles = await getAllFiles(owner, repo, item.path);
@@ -117,15 +132,23 @@ export async function LinesAddedInFirstCommitRatio(url: string) {
   if (commits.length === 0) return 0;
 
   const first = commits[0];
-  const { data } = await octokit.repos.getCommit({ owner, repo, ref: first.sha });
+  const { data } = await octokit.repos.getCommit({
+    owner,
+    repo,
+    ref: first.sha,
+  });
 
   const totalAdded = commits.reduce(async (sumP, commit) => {
     const sum = await sumP;
-    const { data } = await octokit.repos.getCommit({ owner, repo, ref: commit.sha });
-    return sum + data.stats.additions;
+    const { data } = await octokit.repos.getCommit({
+      owner,
+      repo,
+      ref: commit.sha,
+    });
+    return sum + data.stats?.additions || 0;
   }, Promise.resolve(0));
 
-  return data.stats.additions / (await totalAdded);
+  return data.stats?.additions || 0 / (await totalAdded) || 0;
 }
 export async function NavigateCodeBase(url: string) {
   const parsed = parseGitHubUrl(url);
@@ -163,25 +186,25 @@ export function parseGitHubUrl(url: string) {
     const repo = parts[1].replace(/\.git$/, ""); // remove .git if present
     return { owner, repo };
   } catch (err) {
-    console.error("Invalid URL:", err.message);
+    console.error("Invalid URL:", err);
     return null;
   }
 }
 
 async function getRepoInfo(url: string) {
   const parsed = parseGitHubUrl(url);
-  if (!parsed) return null
-  const { owner, repo } = parsed
+  if (!parsed) return null;
+  const { owner, repo } = parsed;
 
   try {
     const response = await octokit.repos.get({
       owner, // GitHub username/org
-      repo,  // Repository name
+      repo, // Repository name
     });
 
     const languages = await octokit.repos.listLanguages({ owner, repo });
     console.log("Repository Info:");
-    console.log(languages.data)
+    console.log(languages.data);
     console.log({
       full_name: response.data.full_name,
       description: response.data.description,

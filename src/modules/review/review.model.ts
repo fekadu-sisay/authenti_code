@@ -13,7 +13,6 @@ export interface IReview extends Document {
     aiPattern: number;
     report?: string;
   };
-  warnings: string[];
   createdAt: Date;
 }
 
@@ -46,11 +45,6 @@ const ReviewSchema = new Schema<IReview>({
     styleConsistency: { type: Number, required: true },
     aiPattern: { type: Number, required: true },
     report: { type: String },
-  },
-
-  warnings: {
-    type: [String],
-    default: [],
   },
 
   createdAt: {
