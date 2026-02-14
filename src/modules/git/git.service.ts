@@ -1,6 +1,77 @@
 import { Octokit } from "@octokit/rest";
 import env from "../../config/env";
 
+const octokit = new Octokit({
+  auth: env.GITHUB_TOKEN, // set your token in the environment
+});
+const EXCLUDED_DIRS = [
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  ".next",
+  "coverage",
+  ".cache",
+  ".turbo",
+  "out",
+  "vendor"
+]
+
+const EXCLUDED_FILES = [
+  "package-lock.json",
+  "yarn.lock",
+  "pnpm-lock.yaml"
+];
+
+export async function getContent(
+  owner: string,
+  repo: string,
+  path: string
+) {
+  try {
+    const response = await octokit.repos.getContent({
+      owner,
+      repo,
+      path,
+    });
+
+    if (!Array.isArray(response.data) && response.data.type === "file") {
+      return Buffer.from(
+        response.data.content,
+        "base64"
+      ).toString("utf-8");
+    }
+
+    return null;
+  } catch (err) {
+    console.log(`Failed to fetch ${path}`);
+    return null;
+  }
+}
+
+
+function shouldExclude(path: string): boolean {
+  // Exclude directories
+  for (const dir of EXCLUDED_DIRS) {
+    if (path.includes(`/${dir}/`) || path.startsWith(`${dir}/`)) {
+      return true;
+    }
+  }
+
+  // Exclude lock files
+  for (const file of EXCLUDED_FILES) {
+    if (path.endsWith(file)) {
+      return true;
+    }
+  }
+
+  // Exclude binary files
+  if (/\.(png|jpg|jpeg|gif|svg|ico|mp4|mp3|woff|woff2|ttf|eot|zip|tar|gz)$/i.test(path)) {
+    return true;
+  }
+
+  return false;
+}
 export async function GetTechstack(url: string) {
   const parsed = parseGitHubUrl(url);
   if (!parsed) return null;
@@ -35,6 +106,7 @@ export async function AvgLinesAddedPerCommit(url: string) {
   const { owner, repo } = parsed;
 
   const commits = await getAllCommits(owner, repo);
+  console.log("commits", commits)
 
   let totalAdded = 0;
   for (const commit of commits) {
@@ -150,29 +222,30 @@ export async function LinesAddedInFirstCommitRatio(url: string) {
 
   return data.stats?.additions || 0 / (await totalAdded) || 0;
 }
+
 export async function NavigateCodeBase(url: string) {
   const parsed = parseGitHubUrl(url);
   if (!parsed) return null;
+
   const { owner, repo } = parsed;
 
   const files = await getAllFiles(owner, repo);
-  const tree: any = {};
 
-  for (const file of files) {
-    const parts = file.split("/");
-    let node = tree;
-    for (const part of parts) {
-      if (!node[part]) node[part] = {};
-      node = node[part];
-    }
-  }
+  const filteredFiles = files.filter((file) => !shouldExclude(file));
 
-  return JSON.stringify(tree);
+  const fileContents = await Promise.all(
+    filteredFiles.map(async (file) => {
+      const content = await getContent(owner, repo, file);
+      return content ? { path: file, content } : null;
+    })
+  );
+
+  // remove null results
+  const cleaned = fileContents.filter(Boolean);
+
+  return cleaned;
 }
 
-const octokit = new Octokit({
-  auth: env.GITHUB_TOKEN, // set your token in the environment
-});
 export function parseGitHubUrl(url: string) {
   try {
     const u = new URL(url);
@@ -191,15 +264,15 @@ export function parseGitHubUrl(url: string) {
   }
 }
 
-async function getRepoInfo(url: string) {
+export async function getRepoInfo(url: string) {
   const parsed = parseGitHubUrl(url);
   if (!parsed) return null;
   const { owner, repo } = parsed;
 
   try {
     const response = await octokit.repos.get({
-      owner, // GitHub username/org
-      repo, // Repository name
+      owner,
+      repo,
     });
 
     const languages = await octokit.repos.listLanguages({ owner, repo });
@@ -219,3 +292,43 @@ async function getRepoInfo(url: string) {
     console.error("Error fetching repo info:", error);
   }
 }
+export async function GetPackageAuthor(url: string) {
+  const parsed = parseGitHubUrl(url)
+  if (!parsed) return
+  const { owner, repo } = parsed
+  try {
+    const response = await octokit.repos.getContent({
+      owner,
+      repo,
+      path: "package.json",
+    });
+
+    if (!Array.isArray(response.data) && response.data.type === "file") {
+      const content = Buffer.from(
+        response.data.content,
+        "base64"
+      ).toString("utf-8");
+
+      const packageJson = JSON.parse(content);
+
+      return packageJson.author || null;
+    }
+
+    return null;
+  } catch (err) {
+    console.log("package.json not found");
+    return null;
+  }
+}
+async function testRun(url: string) {
+  const parsed = parseGitHubUrl(url)
+  if (!parsed) return
+  const { owner, repo } = parsed
+  const author = await GetPackageAuthor(url)
+  const code = await NavigateCodeBase(url)
+  const commits = await getAllCommits(owner, repo)
+  console.log("author", author)
+  console.log("commit", commits)
+  console.log("code", code)
+}
+testRun("https://github.com/fekadu-sisay/authenti_code")

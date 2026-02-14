@@ -9,6 +9,7 @@ import {
   MedianTimeBetweenCommits,
   AvgLinesDeletedPerCommit,
   NavigateCodeBase,
+  GetPackageAuthor,
   GetTechstack,
 } from "../git/git.service";
 import { systemPrompt } from "./systemPrompt";
@@ -61,14 +62,14 @@ const medianTimeBetweenCommits = tool(
   },
 );
 
-const commentDensity = tool(({ url }) => {}, {
+const commentDensity = tool(({ url }) => { }, {
   name: "commentDensity",
   schema: z.object({
     url: z.string(),
   }),
 });
 
-const redundantCommentScore = tool(({ url }) => {}, {
+const redundantCommentScore = tool(({ url }) => { }, {
   name: "redundantCommentScore",
   schema: z.object({
     url: z.string(),
@@ -101,6 +102,17 @@ const model = new ChatGoogle({
   model: "gemini-2.5-flash",
   apiKey: env.GOOGLE_API_KEY,
 });
+const getAuthorName = tool(
+  async ({ url }) => {
+    return await GetPackageAuthor(url)
+  }, {
+  name: "get_techstack",
+  schema: z.object({
+    url: z.string()
+  })
+})
+
+
 const ResponseFormat = z.object({
   commitConsistency: z.number().min(0).max(100),
   codeEvolution: z.number().min(0).max(100),
@@ -128,6 +140,7 @@ const agent = createAgent({
     medianTimeBetweenCommits,
     linesAddedInFirstCommitRatio,
     getTechStack,
+    getAuthorName,
   ],
 });
 
